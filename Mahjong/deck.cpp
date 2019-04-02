@@ -219,8 +219,18 @@ void Deck::deal(vector<pair<int, string>> &player, vector<pair<int, string>> &cp
 		}
 	}
 
+	vector<pair<int, string>>::iterator it = tiles.begin();
+	player.push_back(*it);
+	it = tiles.erase(it);
+	cpu1.push_back(*it);
+	it = tiles.erase(it);
+	cpu2.push_back(*it);
+	it = tiles.erase(it);
+	cpu3.push_back(*it);
+	it = tiles.erase(it);
+
 	//check hand sizes
-	if (player.size() != 12 || cpu1.size() != 12 || cpu2.size() != 12 || cpu3.size() != 12)
+	if (player.size() != HAND_SIZE || cpu1.size() != HAND_SIZE || cpu2.size() != HAND_SIZE || cpu3.size() != HAND_SIZE)
 	{
 		cout << "Error: in deal, hand sizes are incorrect!" << endl;
 		return;
@@ -272,4 +282,11 @@ pair<int, string> Deck::draw_tile(vector<pair<int, string>> &hand)
 	pair<int, string> temp = *it;
 	tiles.erase(it);
 	return temp;
+}
+
+bool Deck::is_empty()
+{
+	if (tiles.size() == 0)
+		return true;
+	return false;
 }

@@ -15,6 +15,8 @@ public:
 	void print_field();
 	void play_game();
 	void print_player_hand();
+	bool declare_victory(string name);
+	void check_combos(pair<int, string> &temp, int &turn);
 
 private:
 	vector<pair<int, string>> field_tiles;
