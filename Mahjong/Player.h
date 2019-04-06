@@ -18,6 +18,7 @@ public:
 	bool is_in_hand(pair<int, string> tile);
 	vector<pair<int, string>> almost_won();
 	void print_combos();
+	int get_hand_size();
 
 	//testing purposes
 	void set_hand(vector<pair<int, string>> input);

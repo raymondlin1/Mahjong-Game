@@ -79,6 +79,10 @@ void Player::add_tile(pair<int, string> tile)
 
 bool Player::has_winning_hand()
 {
+	//since we only run this function whenever a player takes a tile, if their hand size is 1, the acquired tile must be the same as the tile on hand
+	if (hand.size() == 1)
+		return true;
+
 	vector<pair<int,string>> copy = hand;
 	vector<vector<pair<int, string>>> stack;
 
@@ -182,13 +186,13 @@ vector<pair<int,string>> Player::almost_won()
 	vector<pair<int, string>> winning_tiles;
 	pair<int, string> tile;
 
-	if (non_combo_tiles.size() == 1)
+	if (non_combo_tiles.size() == 1 && almost_combo_tiles.empty())
 	{
 		tile.first = non_combo_tiles[0].first;
 		tile.second = non_combo_tiles[0].second;
 		winning_tiles.push_back(tile);
 	}
-	else if (almost_combo_tiles.size() == 4)
+	else if (almost_combo_tiles.size() == 4 && non_combo_tiles.empty())
 	{
 		//two pairs
 		if (almost_combo_tiles[0] == almost_combo_tiles[1] && almost_combo_tiles[2] == almost_combo_tiles[3])
@@ -233,6 +237,7 @@ vector<pair<int,string>> Player::almost_won()
 			{
 				tile.first = almost_combo_tiles[2].first + 1;
 				tile.second = almost_combo_tiles[2].second;
+				winning_tiles.push_back(tile);
 			}
 		}
 		//second two tiles are pairs
@@ -245,14 +250,14 @@ vector<pair<int,string>> Player::almost_won()
 				if (almost_combo_tiles[0].first == 1)
 				{
 					tile.first = 3;
-					tile.second = almost_combo_tiles[3].second;
+					tile.second = almost_combo_tiles[0].second;
 					winning_tiles.push_back(tile);
 				}
 				//if second tile is 9, push back 7
 				else if (almost_combo_tiles[1].first == 9)
 				{
 					tile.first = 7;
-					tile.second = almost_combo_tiles[3].second;
+					tile.second = almost_combo_tiles[1].second;
 					winning_tiles.push_back(tile);
 				}
 				//if first tile isn't 1 and second tile isn't 9, push back both tiles that belong before and after the consecutive tiles
@@ -266,6 +271,13 @@ vector<pair<int,string>> Player::almost_won()
 					tile.second = almost_combo_tiles[1].second;
 					winning_tiles.push_back(tile);
 				}
+			}
+			//if tile missing in between
+			else if (almost_combo_tiles[0].first == almost_combo_tiles[1].first - 2)
+			{
+				tile.first = almost_combo_tiles[0].first + 1;
+				tile.second = almost_combo_tiles[0].second;
+				winning_tiles.push_back(tile);
 			}
 		}
 	}
@@ -306,8 +318,13 @@ void Player::print_combos()
 	vector<vector<pair<int, string>>>::iterator it = combos.begin();
 	while (it != combos.end())
 	{
-		cout << "Combo " << counter << ": " 
-			<< (*it)[0].first << " " << (*it)[0].second << ", " 
+		cout << "Combo " << counter << ": ";
+		if ((*it)[0].first == 0)
+			cout << (*it)[0].second << ", "
+				<< (*it)[1].second << ", "
+				<< (*it)[2].second << endl;
+		else
+			cout << (*it)[0].first << " " << (*it)[0].second << ", " 
 			<< (*it)[1].first << " " << (*it)[1].second << ", " 
 			<< (*it)[2].first << " " << (*it)[2].second << endl;
 
@@ -319,7 +336,7 @@ void Player::print_combos()
 void Player::fix_non_combo_tiles()
 {
 	//find all tiles that are almost a combo and remove them
-	if (non_combo_tiles.size() <= 1)
+	if (non_combo_tiles.empty() || non_combo_tiles.size() == 1)
 		return;
 
 	almost_combo_tiles.clear();
@@ -329,7 +346,7 @@ void Player::fix_non_combo_tiles()
 		vector<pair<int, string>>::iterator it2 = it + 1;
 		if ((*it).second == (*it2).second)
 		{
-			if ((*it).first == (*it2).first ||
+			if ((*it).first == (*it2).first  ||
 				(*it).first == (*it2).first - 1 ||
 				(*it).first == (*it2).first - 2)
 			{
@@ -357,4 +374,9 @@ void Player::print_hand()
 	{
 		std::cout << hand[i].first << " " << hand[i].second << endl;
 	}
+}
+
+int Player::get_hand_size()
+{
+	return hand.size() + (combos.size() * 3);
 }

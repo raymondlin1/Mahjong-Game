@@ -6,6 +6,8 @@ int CPU_BEFORE_PLAYER = 3;
 
 pair<int, string> User::throw_tile()
 {
+	this->fix_non_combo_tiles();
+
 	cout << "Please enter a tile to throw out" << endl;
 	string thrown;
 	bool valid_input = false;
@@ -54,6 +56,7 @@ pair<int, string> User::throw_tile()
 			valid_input = true;
 	}
 	
+	//find it in hand and erase it
 	vector<pair<int, string>>::iterator it = hand.begin();
 	while (it != hand.end())
 	{
@@ -62,12 +65,39 @@ pair<int, string> User::throw_tile()
 		it++;
 	}
 
+	hand.erase(it);
+
 	cout << "You threw out a ";
 	if (tile.first == 0)
 		cout << tile.second << endl;
 	else
 		cout << tile.first << " of " << tile.second << endl;
-	hand.erase(it);
+	
+	//find it in non_combo_tiles, and erase it
+	it = non_combo_tiles.begin();
+	while (it != non_combo_tiles.end())
+	{
+		if ((*it) == tile)
+		{
+			non_combo_tiles.erase(it);
+			break;
+		}
+
+		it++;
+	}
+
+	//find it in almost_combo_tiles, and erase it
+	it = almost_combo_tiles.begin();
+	while (it != almost_combo_tiles.end())
+	{
+		if ((*it) == tile)
+		{
+			almost_combo_tiles.erase(it);
+			break;
+		}
+
+		it++;
+	}
 
 	return tile;
 }

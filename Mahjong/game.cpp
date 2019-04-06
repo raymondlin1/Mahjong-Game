@@ -166,6 +166,17 @@ void Game::play_game()
 			break;
 		}
 
+		//hand check
+		if (cpu_1->get_hand_size() != 13 ||
+			cpu_2->get_hand_size() != 13 ||
+			cpu_3->get_hand_size() != 13 ||
+			player->get_hand_size() != 13)
+		{
+			cout << "Error: one of the player's hand sizes is incorrect" << endl;
+			exit(1);
+		}
+
+		//draw
 		switch (turn)
 		{
 		case 0:
@@ -181,7 +192,10 @@ void Game::play_game()
 			player->sort_hand();
 			print_player_hand();
 			if (player->has_winning_hand())
+			{
 				game_over = declare_victory("player");
+				continue;
+			}
 			else
 				temp = player->throw_tile();
 
@@ -190,7 +204,10 @@ void Game::play_game()
 			deck->draw_tile(cpu_1->get_hand());
 			cpu_1->sort_hand();
 			if (cpu_1->has_winning_hand())
+			{
 				game_over = declare_victory(cpu_1->get_name());
+				continue;
+			}
 			else
 				temp = cpu_1->throw_tile();
 
@@ -199,7 +216,10 @@ void Game::play_game()
 			deck->draw_tile(cpu_2->get_hand());
 			cpu_2->sort_hand();
 			if (cpu_2->has_winning_hand())
+			{
 				game_over = declare_victory(cpu_2->get_name());
+				continue;
+			}
 			else
 				temp = cpu_2->throw_tile();
 
@@ -208,7 +228,10 @@ void Game::play_game()
 			deck->draw_tile(cpu_3->get_hand());
 			cpu_3->sort_hand();
 			if (cpu_3->has_winning_hand())
+			{
 				game_over = declare_victory(cpu_3->get_name());
+				continue;
+			}
 			else
 				temp = cpu_3->throw_tile();
 
@@ -269,18 +292,21 @@ bool Game::declare_victory(string name)
 	{
 		cout << name << " has declared victory! You lose!" << endl;
 		cpu_1->print_hand();
+		cpu_1->print_combos();
 		return true;
 	}
 	else if (name == "cpu_2")
 	{
 		cout << name << " has declared victory! You lose!" << endl;
 		cpu_2->print_hand();
+		cpu_2->print_combos();
 		return true;
 	}
 	else if (name == "cpu_3")
 	{
 		cout << name << " has declared victory! You lose!" << endl;
 		cpu_3->print_hand();
+		cpu_3->print_combos();
 		return true;
 	}
 	else
@@ -304,7 +330,8 @@ bool is_in_vector(vector<pair<int, string>> input, pair<int, string> tile)
 void Game::check_combos(pair<int, string> &temp, int &turn)
 {
 	//if anyone has a combo
-	if ((player->has_combo(temp, turn) && turn != 0) || is_in_vector(player->almost_won(), temp))
+	bool won = false;
+	if ((player->has_combo(temp, turn) && turn != 0) || (won = is_in_vector(player->almost_won(), temp)))
 	{
 		print_field();
 		print_player_hand();
@@ -321,7 +348,7 @@ void Game::check_combos(pair<int, string> &temp, int &turn)
 				valid = true;
 				player->has_combo(temp, turn, true);
 				turn = 0;
-				if (player->has_winning_hand())
+				if (player->has_winning_hand() || won)
 					game_over = declare_victory("player");
 				else
 					field_tiles.push_back(player->throw_tile());
@@ -336,7 +363,7 @@ void Game::check_combos(pair<int, string> &temp, int &turn)
 			}
 		}
 	}
-	else if ((cpu_1->has_combo(temp, turn) && turn != 1) || is_in_vector(cpu_1->almost_won(), temp))
+	else if ((cpu_1->has_combo(temp, turn) && turn != 1) || (won = is_in_vector(cpu_1->almost_won(), temp)))
 	{
 		turn = 1;
 		cout << "CPU 1 took the ";
@@ -349,10 +376,16 @@ void Game::check_combos(pair<int, string> &temp, int &turn)
 		cpu_1->sort_hand();
 		if (cpu_1->has_winning_hand())
 			game_over = declare_victory(cpu_1->get_name());
+		else if (won)
+		{
+			cpu_1->add_tile(temp);
+			cpu_1->sort_hand();
+			game_over = declare_victory(cpu_1->get_name());
+		}
 		else
 			field_tiles.push_back(cpu_1->throw_tile());
 	}
-	else if ((cpu_2->has_combo(temp, turn) && turn != 2) || is_in_vector(cpu_2->almost_won(), temp))
+	else if ((cpu_2->has_combo(temp, turn) && turn != 2) || (won = is_in_vector(cpu_2->almost_won(), temp)))
 	{
 		turn = 2;
 		cout << "CPU 2 took the ";
@@ -365,10 +398,16 @@ void Game::check_combos(pair<int, string> &temp, int &turn)
 		cpu_2->sort_hand();
 		if (cpu_2->has_winning_hand())
 			game_over = declare_victory(cpu_2->get_name());
+		else if (won)
+		{
+			cpu_2->add_tile(temp);
+			cpu_2->sort_hand();
+			game_over = declare_victory(cpu_2->get_name());
+		}
 		else
 			field_tiles.push_back(cpu_2->throw_tile());
 	}
-	else if ((cpu_3->has_combo(temp, turn) && turn != 3) || is_in_vector(cpu_3->almost_won(), temp))
+	else if ((cpu_3->has_combo(temp, turn) && turn != 3) || (won = is_in_vector(cpu_3->almost_won(), temp)))
 	{
 		turn = 3;
 		cout << "CPU 3 took the ";
@@ -381,6 +420,12 @@ void Game::check_combos(pair<int, string> &temp, int &turn)
 		cpu_3->sort_hand();
 		if (cpu_3->has_winning_hand())
 			game_over = declare_victory(cpu_3->get_name());
+		else if (won)
+		{
+			cpu_3->add_tile(temp);
+			cpu_3->sort_hand();
+			game_over = declare_victory(cpu_3->get_name());
+		}
 		else
 			field_tiles.push_back(cpu_3->throw_tile());
 	}

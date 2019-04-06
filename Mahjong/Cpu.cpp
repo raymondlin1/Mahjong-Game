@@ -25,14 +25,41 @@ pair<int, string> Cpu::throw_tile()
 		non_combo_tiles.pop_back();
 	}
 	
-	//find it in hand
-	for (vector<pair<int, string>>::iterator it = hand.begin(); it != hand.end(); it++)
+	//find it in hand, and erase it
+	vector<pair<int, string>>::iterator it = hand.begin();
+	for (; it != hand.end(); it++)
 	{
 		if (temp == (*it))
 		{
 			hand.erase(it);
 			break;
 		}
+	}
+
+	//find it in non_combo_tiles, and erase it
+	it = non_combo_tiles.begin();
+	while (it != non_combo_tiles.end())
+	{
+		if ((*it) == temp)
+		{
+			non_combo_tiles.erase(it);
+			break;
+		}
+
+		it++;
+	}
+
+	//find it in almost_combo_tiles, and erase it
+	it = almost_combo_tiles.begin();
+	while (it != almost_combo_tiles.end())
+	{
+		if ((*it) == temp)
+		{
+			almost_combo_tiles.erase(it);
+			break;
+		}
+
+		it++;
 	}
 
 	if (this->name == "cpu_1")
