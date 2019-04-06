@@ -6,6 +6,8 @@ using namespace std;
 int FIRST_PLAYER_HAND_SIZE = 14;
 
 void increment_turn(int &turn);
+int increment_turn_2(int turn);
+string increment_wind(string wind);
 bool is_in_vector(vector<pair<int, string>> input, pair<int, string> tile);
 
 Game::Game()
@@ -21,18 +23,19 @@ Game::Game()
 		cout << "Deck successfully created!" << endl;
 	}
 	deck->shuffle();
-	//deck->print_deck();
 
 	player = new User();
 	cpu_1 = new Cpu("cpu_1");
 	cpu_2 = new Cpu("cpu_2");
 	cpu_3 = new Cpu("cpu_3");
-	deck->deal(player->get_hand(), cpu_1->get_hand(), cpu_2->get_hand(), cpu_3->get_hand());
+	deck->deal(player->get_hand(), cpu_1->get_hand(), cpu_2->get_hand(), cpu_3->get_hand(), -1);
 	player->sort_hand();
 	cpu_1->sort_hand();
 	cpu_2->sort_hand();
 	cpu_3->sort_hand();
 	game_over = false;
+	wind = "East";
+	winner = -1;
 }
 
 void Game::print_hands()
@@ -112,143 +115,223 @@ void Game::print_field()
 
 void Game::play_game()
 {
-	//order: 0-player, 1-cpu1, 2-cpu2, 3-cpu3
-	int turn;
-	pair<int, string> temp;
+	print_balances();
 
-	//get first player
 	if (player->get_hand().size() == FIRST_PLAYER_HAND_SIZE)
-	{
-		turn = 0;
-		print_player_hand();
-		if (player->has_winning_hand())
-			declare_victory("player");
-
-		temp = player->throw_tile();
-	}
+		first_player = 0;
 	else if (cpu_1->get_hand().size() == FIRST_PLAYER_HAND_SIZE)
-	{
-		turn = 1;
-		if (cpu_1->has_winning_hand())
-			declare_victory(cpu_1->get_name());
-
-		temp = cpu_1->throw_tile();
-	}
+		first_player = 1;
 	else if (cpu_2->get_hand().size() == FIRST_PLAYER_HAND_SIZE)
-	{
-		turn = 2;
-		if (cpu_2->has_winning_hand())
-			declare_victory(cpu_2->get_name());
-
-		temp = cpu_2->throw_tile();
-	}
+		first_player = 2;
 	else if (cpu_3->get_hand().size() == FIRST_PLAYER_HAND_SIZE)
+		first_player = 3;
+
+	bool new_game = true;
+	while (new_game)
 	{
-		turn = 3;
-		if (cpu_3->has_winning_hand())
-			declare_victory(cpu_3->get_name());
+		cout << "Wind is blowing towards the " << wind << endl;
+		//order: 0-player, 1-cpu1, 2-cpu2, 3-cpu3
+		int turn;
+		pair<int, string> temp;
 
-		temp = cpu_3->throw_tile();
-	}
-
-	//if anyone has a combo
-	check_combos(temp, turn);
-
-	increment_turn(turn);
-	//print_field();
-	
-	while (!game_over)
-	{
-		if (deck->is_empty())
+		//get first player
+		if (player->get_hand().size() == FIRST_PLAYER_HAND_SIZE)
 		{
-			game_over = true;
-			cout << "Game over! The deck is empty! It's a tie!" << endl;
-			break;
-		}
-
-		//hand check
-		if (cpu_1->get_hand_size() != 13 ||
-			cpu_2->get_hand_size() != 13 ||
-			cpu_3->get_hand_size() != 13 ||
-			player->get_hand_size() != 13)
-		{
-			cout << "Error: one of the player's hand sizes is incorrect" << endl;
-			exit(1);
-		}
-
-		//draw
-		switch (turn)
-		{
-		case 0:
-			temp = deck->draw_tile(player->get_hand());
-			print_field();
-			
-			cout << "You drew a ";
-			if (temp.first == 0)
-				cout << temp.second << endl;
-			else
-				cout << temp.first << " of " << temp.second << endl;
-
-			player->sort_hand();
+			turn = 0;
 			print_player_hand();
 			if (player->has_winning_hand())
 			{
+				winner = 0;
 				game_over = declare_victory("player");
-				continue;
 			}
-			else
-				temp = player->throw_tile();
 
-			break;
-		case 1:
-			deck->draw_tile(cpu_1->get_hand());
-			cpu_1->sort_hand();
+			temp = player->throw_tile();
+		}
+		else if (cpu_1->get_hand().size() == FIRST_PLAYER_HAND_SIZE)
+		{
+			turn = 1;
 			if (cpu_1->has_winning_hand())
 			{
+				winner = 1;
 				game_over = declare_victory(cpu_1->get_name());
-				continue;
 			}
-			else
-				temp = cpu_1->throw_tile();
 
-			break;
-		case 2:
-			deck->draw_tile(cpu_2->get_hand());
-			cpu_2->sort_hand();
+			temp = cpu_1->throw_tile();
+		}
+		else if (cpu_2->get_hand().size() == FIRST_PLAYER_HAND_SIZE)
+		{
+			turn = 2;
 			if (cpu_2->has_winning_hand())
 			{
+				winner = 2;
 				game_over = declare_victory(cpu_2->get_name());
-				continue;
 			}
-			else
-				temp = cpu_2->throw_tile();
 
-			break;
-		case 3:
-			deck->draw_tile(cpu_3->get_hand());
-			cpu_3->sort_hand();
+			temp = cpu_2->throw_tile();
+		}
+		else if (cpu_3->get_hand().size() == FIRST_PLAYER_HAND_SIZE)
+		{
+			turn = 3;
 			if (cpu_3->has_winning_hand())
 			{
+				winner = 3;
 				game_over = declare_victory(cpu_3->get_name());
-				continue;
 			}
-			else
-				temp = cpu_3->throw_tile();
 
-			break;
-		default:
-			cout << "Error: Turn incrementing failed!" << endl;
-			game_over = true;
+			temp = cpu_3->throw_tile();
 		}
-		
+
 		//if anyone has a combo
 		check_combos(temp, turn);
 
-		cout << endl;
 		increment_turn(turn);
-	}
+		//print_field();
 
-	print_hands();
+		//game loop
+		while (!game_over)
+		{
+			if (deck->is_empty())
+			{
+				game_over = true;
+				cout << "Game over! The deck is empty! It's a tie!" << endl;
+				break;
+			}
+
+			//hand check
+			if (cpu_1->get_hand_size() != 13 ||
+				cpu_2->get_hand_size() != 13 ||
+				cpu_3->get_hand_size() != 13 ||
+				player->get_hand_size() != 13)
+			{
+				cout << "Error: one of the player's hand sizes is incorrect" << endl;
+				exit(1);
+			}
+
+			//draw
+			switch (turn)
+			{
+			case 0:
+				temp = deck->draw_tile(player->get_hand());
+				print_field();
+
+				cout << "You drew a ";
+				if (temp.first == 0)
+					cout << temp.second << endl;
+				else
+					cout << temp.first << " of " << temp.second << endl;
+
+				player->sort_hand();
+				print_player_hand();
+				if (player->has_winning_hand())
+				{
+					winner = 0;
+					game_over = declare_victory("player");
+					continue;
+				}
+				else
+					temp = player->throw_tile();
+
+				break;
+			case 1:
+				deck->draw_tile(cpu_1->get_hand());
+				cpu_1->sort_hand();
+				if (cpu_1->has_winning_hand())
+				{
+					winner = 1;
+					game_over = declare_victory(cpu_1->get_name());
+					continue;
+				}
+				else
+					temp = cpu_1->throw_tile();
+
+				break;
+			case 2:
+				deck->draw_tile(cpu_2->get_hand());
+				cpu_2->sort_hand();
+				if (cpu_2->has_winning_hand())
+				{
+					winner = 2;
+					game_over = declare_victory(cpu_2->get_name());
+					continue;
+				}
+				else
+					temp = cpu_2->throw_tile();
+
+				break;
+			case 3:
+				deck->draw_tile(cpu_3->get_hand());
+				cpu_3->sort_hand();
+				if (cpu_3->has_winning_hand())
+				{
+					winner = 3;
+					game_over = declare_victory(cpu_3->get_name());
+					continue;
+				}
+				else
+					temp = cpu_3->throw_tile();
+
+				break;
+			default:
+				cout << "Error: Turn incrementing failed!" << endl;
+				game_over = true;
+			}
+
+			//if anyone has a combo
+			check_combos(temp, turn);
+
+			cout << endl;
+			if(!game_over)
+				increment_turn(turn);
+		}
+
+		calculate_pay(turn);
+		print_balances();
+
+		cout << "Would you like to play again?" << endl;
+		bool valid = false;
+		while (!valid)
+		{
+			string input;
+			getline(cin, input);
+			if (input == "Y" || input == "y" || input == "yes" || input == "Yes")
+			{
+				//determine the next dealer
+				int new_dealer;
+				if (winner == deck->get_dealer())
+					new_dealer = winner;
+				else
+					new_dealer = increment_turn_2(deck->get_dealer());
+
+				if (new_dealer == first_player && winner != first_player)
+					wind = increment_wind(wind);
+
+				valid = true;
+				game_over = false;
+				delete deck;
+				cpu_1->clear_structures();
+				cpu_2->clear_structures();
+				cpu_3->clear_structures();
+				player->clear_structures();
+				deck = new Deck();
+				deck->shuffle();
+				deck->deal(player->get_hand(), cpu_1->get_hand(), cpu_2->get_hand(), cpu_3->get_hand(), new_dealer);
+				player->sort_hand();
+				cpu_1->sort_hand();
+				cpu_2->sort_hand();
+				cpu_3->sort_hand();
+				field_tiles.clear();
+			}
+			else if (input == "N" || input == "n" || input == "no" || input == "No")
+			{
+				valid = true;
+				new_game = false;
+			}
+			else
+			{
+				cout << "Please enter a valid input." << endl;
+			}
+		}
+	}
 }
 
 void increment_turn(int &turn)
@@ -259,36 +342,34 @@ void increment_turn(int &turn)
 		turn++;
 }
 
+int increment_turn_2(int turn)
+{
+	if (turn == 3)
+		return 0;
+	else
+		return turn + 1;
+}
+
+string increment_wind(string wind)
+{
+	if (wind == "East")
+		return "South";
+	else if (wind == "South")
+		return "West";
+	else if (wind == "West")
+		return "North";
+	else if (wind == "North")
+		return "East";
+}
+
 bool Game::declare_victory(string name)
 {
 	if (name == "player")
 	{
-		cout << "You have a winning combo. Would you like to declare victory?" << endl;
-
-		bool valid_input = false;
-		string input;
-		while (!valid_input)
-		{
-			getline(cin, input);
-			if (input == "yes" || input == "Yes" || input == "Y" || input == "y")
-			{
-				cout << "You have won!!!! Congratulations!" << endl;
-				return true;
-			}
-			else if (input == "no" || input == "No" || input == "N" || input == "n")
-			{
-				valid_input = true;
-			}
-			else
-			{
-				cout << "Please enter a valid input" << endl;
-			}
-		}
-
-		return false;
+		cout << "You have won!!!! Congratulations!" << endl;
+		return true;
 	}
-	
-	if (name == "cpu_1")
+	else if (name == "cpu_1")
 	{
 		cout << name << " has declared victory! You lose!" << endl;
 		cpu_1->print_hand();
@@ -329,6 +410,7 @@ bool is_in_vector(vector<pair<int, string>> input, pair<int, string> tile)
 
 void Game::check_combos(pair<int, string> &temp, int &turn)
 {
+	pair<int, string> thrown;
 	//if anyone has a combo
 	bool won = false;
 	if ((player->has_combo(temp, turn) && turn != 0) || (won = is_in_vector(player->almost_won(), temp)))
@@ -347,11 +429,17 @@ void Game::check_combos(pair<int, string> &temp, int &turn)
 			{
 				valid = true;
 				player->has_combo(temp, turn, true);
-				turn = 0;
 				if (player->has_winning_hand() || won)
+				{
+					winner = 0;
 					game_over = declare_victory("player");
+				}
 				else
-					field_tiles.push_back(player->throw_tile());
+				{
+					turn = 0;
+					thrown = player->throw_tile();
+					check_combos(thrown, turn);
+				}
 			}
 			else if (input == "no" || input == "No" || input == "n" || input == "N")
 			{
@@ -365,7 +453,6 @@ void Game::check_combos(pair<int, string> &temp, int &turn)
 	}
 	else if ((cpu_1->has_combo(temp, turn) && turn != 1) || (won = is_in_vector(cpu_1->almost_won(), temp)))
 	{
-		turn = 1;
 		cout << "CPU 1 took the ";
 		if (temp.first == 0)
 			cout << temp.second << endl;
@@ -375,19 +462,26 @@ void Game::check_combos(pair<int, string> &temp, int &turn)
 		cpu_1->print_combos();
 		cpu_1->sort_hand();
 		if (cpu_1->has_winning_hand())
+		{
+			winner = 1;
 			game_over = declare_victory(cpu_1->get_name());
+		}
 		else if (won)
 		{
+			winner = 1;
 			cpu_1->add_tile(temp);
 			cpu_1->sort_hand();
 			game_over = declare_victory(cpu_1->get_name());
 		}
 		else
-			field_tiles.push_back(cpu_1->throw_tile());
+		{
+			turn = 1;
+			thrown = cpu_1->throw_tile();
+			check_combos(thrown, turn);
+		}
 	}
 	else if ((cpu_2->has_combo(temp, turn) && turn != 2) || (won = is_in_vector(cpu_2->almost_won(), temp)))
 	{
-		turn = 2;
 		cout << "CPU 2 took the ";
 		if (temp.first == 0)
 			cout << temp.second << endl;
@@ -397,19 +491,26 @@ void Game::check_combos(pair<int, string> &temp, int &turn)
 		cpu_2->print_combos();
 		cpu_2->sort_hand();
 		if (cpu_2->has_winning_hand())
+		{
+			winner = 2;
 			game_over = declare_victory(cpu_2->get_name());
+		}
 		else if (won)
 		{
+			winner = 2;
 			cpu_2->add_tile(temp);
 			cpu_2->sort_hand();
 			game_over = declare_victory(cpu_2->get_name());
 		}
 		else
-			field_tiles.push_back(cpu_2->throw_tile());
+		{
+			turn = 2;
+			thrown = cpu_2->throw_tile();
+			check_combos(thrown, turn);
+		}
 	}
 	else if ((cpu_3->has_combo(temp, turn) && turn != 3) || (won = is_in_vector(cpu_3->almost_won(), temp)))
 	{
-		turn = 3;
 		cout << "CPU 3 took the ";
 		if (temp.first == 0)
 			cout << temp.second << endl;
@@ -419,18 +520,148 @@ void Game::check_combos(pair<int, string> &temp, int &turn)
 		cpu_3->print_combos();
 		cpu_3->sort_hand();
 		if (cpu_3->has_winning_hand())
+		{
+			winner = 3;
 			game_over = declare_victory(cpu_3->get_name());
+		}
 		else if (won)
 		{
+			winner = 3;
 			cpu_3->add_tile(temp);
 			cpu_3->sort_hand();
 			game_over = declare_victory(cpu_3->get_name());
 		}
 		else
-			field_tiles.push_back(cpu_3->throw_tile());
+		{
+			turn = 3;
+			thrown = cpu_3->throw_tile();
+			check_combos(thrown, turn);
+		}
 	}
 	else
 	{
 		field_tiles.push_back(temp);
 	}
+}
+
+void Game::calculate_pay(int turn)
+{
+	double amount;
+	if (winner == turn)
+	{
+		//collect money from everyone
+		switch (turn)
+		{
+		case 0:
+			amount = player->calculate_payout(wind);
+			player->change_balance(amount * 3);
+			cpu_1->change_balance(-amount);
+			cpu_2->change_balance(-amount);
+			cpu_3->change_balance(-amount);
+			cout << "All players paid $" << amount << " to you." << endl;
+			break;
+		case 1:
+			amount = cpu_1->calculate_payout(wind);
+			player->change_balance(-amount);
+			cpu_1->change_balance(amount * 3);
+			cpu_2->change_balance(-amount);
+			cpu_3->change_balance(-amount);
+			cout << "All players paid $" << amount << " to Cpu 1." << endl;
+			break;
+		case 2:
+			amount = cpu_2->calculate_payout(wind);
+			player->change_balance(-amount);
+			cpu_1->change_balance(-amount);
+			cpu_2->change_balance(amount * 3);
+			cpu_3->change_balance(-amount);
+			cout << "All players paid $" << amount << " to Cpu 2." << endl;
+			break;
+		case 3:
+			amount = cpu_3->calculate_payout(wind);
+			player->change_balance(-amount);
+			cpu_1->change_balance(-amount);
+			cpu_2->change_balance(-amount);
+			cpu_3->change_balance(amount * 3);
+			cout << "All players paid $" << amount << " to Cpu 3." << endl;
+			break;
+		default:
+			cout << "Error: wrong turn." << endl;
+			exit(1);
+		}
+	}
+	else
+	{
+		switch (winner)
+		{
+		case 0:
+			amount = player->calculate_payout(wind);
+			break;
+		case 1:
+			amount = cpu_1->calculate_payout(wind);
+			break;
+		case 2:
+			amount = cpu_2->calculate_payout(wind);
+			break;
+		case 3:
+			amount = cpu_3->calculate_payout(wind);
+			break;
+		default:
+			cout << "Error: winner has not been set." << endl;
+			exit(1);
+		}
+
+		switch (turn)
+		{
+		case 0:
+			player->change_balance(-amount);
+			cout << "Player paid $" << amount;
+			break;
+		case 1:
+			cpu_1->change_balance(-amount);
+			cout << "Cpu 1 paid $" << amount;
+			break;
+		case 2:
+			cpu_2->change_balance(-amount);
+			cout << "Cpu 2 paid $" << amount;
+			break;
+		case 3:
+			cpu_3->change_balance(-amount);
+			cout << "Cpu 3 paid $" << amount;
+			break;
+		default:
+			cout << "Error: wrong turn." << endl;
+			exit(1);
+		}
+
+		switch (winner)
+		{
+		case 0:
+			player->change_balance(amount);
+			cout << " to player." << endl;
+			break;
+		case 1:
+			cpu_1->change_balance(amount);
+			cout << " to Cpu 1." << endl;
+			break;
+		case 2:
+			cpu_2->change_balance(amount);
+			cout << " to Cpu 2." << endl;
+			break;
+		case 3:
+			cpu_3->change_balance(amount);
+			cout << " to Cpu 3." << endl;
+			break;
+		default:
+			cout << "Error: winner has not been set." << endl;
+			exit(1);
+		}
+	}
+}
+
+void Game::print_balances()
+{
+	cout << "Player balance: $" << player->get_balance() << endl;
+	cout << "Cpu 1 balance: $" << cpu_1->get_balance() << endl;
+	cout << "Cpu 2 balance: $" << cpu_2->get_balance() << endl;
+	cout << "Cpu 3 balance: $" << cpu_3->get_balance() << endl;
 }

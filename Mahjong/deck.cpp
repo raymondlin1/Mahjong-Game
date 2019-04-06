@@ -186,7 +186,7 @@ void Deck::shuffle()
 }
 
 void Deck::deal(vector<pair<int, string>> &player, vector<pair<int, string>> &cpu1, vector<pair<int, string>> &cpu2, 
-	vector<pair<int, string>> &cpu3)
+	vector<pair<int, string>> &cpu3, int turn)
 {
 	for(int j = 0; j < 3; j++)
 	{
@@ -236,42 +236,88 @@ void Deck::deal(vector<pair<int, string>> &player, vector<pair<int, string>> &cp
 		return;
 	}
 
-	srand(time(0));
-	int random = rand() % 4;
-	switch (random)
+	if (turn == -1)
 	{
-	case 0:
+		srand(time(0));
+		int random = rand() % 4;
+		switch (random)
+		{
+		case 0:
+		{
+			cout << "Player has been selected as the dealer!" << endl;
+			vector<pair<int, string>>::iterator it = tiles.begin();
+			player.push_back(*it);
+			tiles.erase(it);
+			dealer = 0;
+			break;
+		}
+		case 1:
+		{
+			cout << "CPU 1 has been selected as the dealer!" << endl;
+			vector<pair<int, string>>::iterator it = tiles.begin();
+			cpu1.push_back(*it);
+			tiles.erase(it);
+			dealer = 1;
+			break;
+		}
+		case 2:
+		{
+			cout << "CPU 2 has been selected as the dealer!" << endl;
+			vector<pair<int, string>>::iterator it = tiles.begin();
+			cpu2.push_back(*it);
+			tiles.erase(it);
+			dealer = 2;
+			break;
+		}
+		case 3:
+		{
+			cout << "CPU 3 has been selected as the dealer!" << endl;
+			vector<pair<int, string>>::iterator it = tiles.begin();
+			cpu3.push_back(*it);
+			tiles.erase(it);
+			dealer = 3;
+			break;
+		}
+		default:
+			cout << "something wrong with mod 4." << endl;
+		}
+	}
+	else if (turn == 0)
 	{
-		cout << "Player has been selected to go first!" << endl;
+		cout << "Player has been selected as the dealer!" << endl;
 		vector<pair<int, string>>::iterator it = tiles.begin();
 		player.push_back(*it);
 		tiles.erase(it);
-		break;
+		dealer = 0;
 	}
-	case 1:
+	else if (turn == 1)
 	{
-		cout << "CPU 1 has been selected to go first!" << endl;
+		cout << "CPU 1 has been selected as the dealer!" << endl;
 		vector<pair<int, string>>::iterator it = tiles.begin();
 		cpu1.push_back(*it);
 		tiles.erase(it);
-		break;
+		dealer = 1;
 	}
-	case 2:
+	else if (turn == 2)
 	{
-		cout << "CPU 2 has been selected to go first!" << endl;
+		cout << "CPU 2 has been selected as the dealer!" << endl;
 		vector<pair<int, string>>::iterator it = tiles.begin();
 		cpu2.push_back(*it);
 		tiles.erase(it);
-		break;
+		dealer = 2;
 	}
-	case 3:
+	else if (turn == 3)
 	{
-		cout << "CPU 3 has been selected to go first!" << endl;
+		cout << "CPU 3 has been selected as the dealer!" << endl;
 		vector<pair<int, string>>::iterator it = tiles.begin();
 		cpu3.push_back(*it);
 		tiles.erase(it);
-		break;
+		dealer = 3;
 	}
+	else
+	{
+		cout << "invalid turn" << endl;
+		exit(1);
 	}
 }
 
@@ -289,4 +335,18 @@ bool Deck::is_empty()
 	if (tiles.size() == 0)
 		return true;
 	return false;
+}
+
+int& Deck::get_dealer()
+{
+	return dealer;
+}
+
+bool Deck::set_dealer(int input)
+{
+	if (input < 0 || input > 3)
+		return false;
+
+	dealer = input;
+	return true;
 }

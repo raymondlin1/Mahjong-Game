@@ -7,6 +7,11 @@ void bubble_sort_hand(vector<pair<int, string>> &arr, bool first, int start, int
 void find_combos(vector<vector<pair<int, string>>> &stack, vector<pair<int, string>> &copy);
 bool has_winning_hand_helper(vector<vector<pair<int, string>>> &stack, vector<pair<int, string>> &copy);
 
+Player::Player()
+{
+	balance = 5.0;
+}
+
 vector<pair<int, string>>& Player::get_hand()
 {
 	return hand;
@@ -362,6 +367,72 @@ void Player::fix_non_combo_tiles()
 	}
 }
 
+int Player::get_hand_size()
+{
+	return hand.size() + (combos.size() * 3);
+}
+
+void Player::clear_structures()
+{
+	hand.clear();
+	combos.clear();
+	non_combo_tiles.clear();
+	almost_combo_tiles.clear();
+}
+
+void Player::change_balance(double amount)
+{
+	balance += amount;
+}
+
+double Player::get_balance()
+{
+	return balance;
+}
+
+double Player::calculate_payout(string wind)
+{
+	double value = 0.1;
+	vector<vector<pair<int, string>>>::iterator it = combos.begin();
+	while (it != combos.end())
+	{
+		string suite = (*it)[0].second;
+		if (suite == "Red Middle" || suite == "White Board" || suite == "Green Good Luck" || suite == wind)
+			value += 0.1;
+		it++;
+	}
+
+	vector<pair<int, string>>::iterator it2 = hand.begin();
+	int num_green = 0;
+	int num_white = 0;
+	int num_red = 0;
+	int num_wind = 0;
+	while (it2 != hand.end())
+	{
+		string suite = (*it2).second;
+		if (suite == "Red Middle")
+			num_red++;
+		else if (suite == "White Board")
+			num_white++;
+		else if (suite == "Green Good Luck")
+			num_green++;
+		else if (suite == wind)
+			num_wind++;
+
+		it2++;
+	}
+
+	if (num_red >= 3)
+		value += 0.1;
+	if (num_green >= 3)
+		value += 0.1;
+	if (num_white >= 3)
+		value += 0.1;
+	if (num_wind >= 3)
+		value += 0.1;
+	return value;
+}
+
 //test
 void Player::set_hand(vector<pair<int, string>> input)
 {
@@ -374,9 +445,4 @@ void Player::print_hand()
 	{
 		std::cout << hand[i].first << " " << hand[i].second << endl;
 	}
-}
-
-int Player::get_hand_size()
-{
-	return hand.size() + (combos.size() * 3);
 }

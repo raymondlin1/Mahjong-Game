@@ -17,6 +17,8 @@ public:
 	void print_player_hand();
 	bool declare_victory(string name);
 	void check_combos(pair<int, string> &temp, int &turn);
+	void calculate_pay(int turn);
+	void print_balances();
 
 private:
 	vector<pair<int, string>> field_tiles;
@@ -26,6 +28,9 @@ private:
 	Cpu* cpu_2;
 	Cpu* cpu_3;
 	bool game_over;
+	int winner;
+	string wind;
+	int first_player;
 };
 
 #endif

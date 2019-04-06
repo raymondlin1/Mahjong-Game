@@ -9,6 +9,7 @@
 class Player
 {
 public:
+	Player();
 	vector<pair<int, string>>& get_hand();
 	void sort_hand();
 	virtual pair<int, string> throw_tile() = 0;
@@ -19,6 +20,10 @@ public:
 	vector<pair<int, string>> almost_won();
 	void print_combos();
 	int get_hand_size();
+	void clear_structures();
+	void change_balance(double amount);
+	double get_balance();
+	double calculate_payout(string wind);
 
 	//testing purposes
 	void set_hand(vector<pair<int, string>> input);
@@ -31,6 +36,7 @@ protected:
 	vector<vector<pair<int, string>>> combos;
 	vector<pair<int, string>> non_combo_tiles;
 	vector<pair<int, string>> almost_combo_tiles;
+	double balance;
 };
 
 #endif
